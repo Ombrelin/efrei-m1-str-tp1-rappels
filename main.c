@@ -93,14 +93,14 @@ typedef struct Buffer {
 
 struct Buffer buffer;
 
-void writeBuffer(int data) {
-    buffer.data[buffer.writeIndex] = data;
-    buffer.writeIndex = (buffer.writeIndex + 1) % BUFFER_SIZE;
+void writeBuffer(int data, struct Buffer* buffer) {
+    buffer->data[buffer->writeIndex] = data;
+    buffer->writeIndex = (buffer->writeIndex + 1) % BUFFER_SIZE;
 }
 
-int readBuffer() {
-    int data = buffer.data[buffer.readIndex];
-    buffer.readIndex = (buffer.readIndex + 1) % BUFFER_SIZE;
+int readBuffer(struct Buffer* buffer) {
+    int data = buffer->data[buffer->readIndex];
+    buffer->readIndex = (buffer->readIndex + 1) % BUFFER_SIZE;
     return data;
 }
 
@@ -110,7 +110,7 @@ void *producer() {
         srand(time(NULL));
         int randomData = rand();
         sleep(3);
-        writeBuffer(randomData);
+        writeBuffer(randomData, &buffer);
         printf("Producer wrote %d in the buffer\n", randomData);
         V(&occ);
     }
@@ -119,7 +119,7 @@ void *producer() {
 void *consumer() {
     while (1) {
         P(&occ);
-        int data = readBuffer();
+        int data = readBuffer(&buffer);
         sleep(3);
         printf("Consumer read %d from the buffer\n", data);
         V(&lib);
@@ -137,10 +137,91 @@ void exo3() {
     pthread_t consumer_thread;
     pthread_t producer_thread;
 
-    pthread_create(&consumer_thread,NULL,consumer,NULL);
-    pthread_create(&producer_thread,NULL,producer,NULL);
+    pthread_create(&consumer_thread, NULL, consumer, NULL);
+    pthread_create(&producer_thread, NULL, producer, NULL);
 
-    while (1){}
+    while (1) {}
+}
+
+// Exo 4
+
+
+sem_t freeAir;
+sem_t occAir;
+
+sem_t freeGround;
+sem_t occGround;
+
+// Air buffer
+struct Buffer air;
+// Ground Buffer
+struct Buffer ground;
+
+// Air producer
+void *incomingPlane() {
+    while (1) {
+        P(&freeAir);
+        srand(time(NULL));
+        int randomData = rand();
+        sleep(3);
+        writeBuffer(randomData, &air);
+        printf("Plane %d incoming\n", randomData);
+        V(&occAir);
+    }
+}
+
+// Air consumer
+void *landPlane() {
+    while (1) {
+        P(&occAir);
+        int data = readBuffer(&air);
+        sleep(3);
+        printf("Plane %d has landed\n", data);
+        V(&freeGround);
+    }
+}
+
+// Ground producer
+void *releasePlane() {
+    while (1) {
+        P(&freeGround);
+        srand(time(NULL));
+        int randomData = rand();
+        sleep(3);
+        writeBuffer(randomData, &ground);
+        printf("Plane %d out of hangar\n", randomData);
+        V(&occAir);
+    }
+}
+
+// Ground consumer
+void *takeOffPLane() {
+    while (1) {
+        P(&occGround);
+        int data = readBuffer(&ground);
+        sleep(3);
+        printf("Plane %d has taken off\n", data);
+        V(&freeGround);
+    }
+}
+
+void exo4() {
+    sem_init(&freeAir, 0, BUFFER_SIZE);
+    sem_init(&occAir, 0, 0);
+
+    sem_init(&freeGround, 0, BUFFER_SIZE);
+    sem_init(&occGround, 0, 0);
+
+    pthread_t releasePlane_thread;
+    pthread_t takeOffPLane_thread;
+    pthread_t incomingPlane_thread;
+    pthread_t landPlane_thread;
+
+    pthread_create(&releasePlane_thread, NULL, releasePlane, NULL);
+    pthread_create(&takeOffPLane_thread, NULL, takeOffPLane, NULL);
+    pthread_create(&incomingPlane_thread, NULL, incomingPlane, NULL);
+    pthread_create(&landPlane_thread, NULL, landPlane, NULL);
+    while(1){}
 }
 
 int main() {
@@ -151,7 +232,10 @@ int main() {
     //exo2();
 
     // Exo 3
-    exo3();
+    //exo3();
+
+    // Exo 4
+    exo4();
 
     return 0;
 }

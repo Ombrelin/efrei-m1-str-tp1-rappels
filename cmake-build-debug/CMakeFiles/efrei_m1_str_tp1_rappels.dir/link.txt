@@ -1,1 +1,0 @@
-/usr/bin/cc  -pthread -g   CMakeFiles/efrei_m1_str_tp1_rappels.dir/main.c.o  -o efrei_m1_str_tp1_rappels 
