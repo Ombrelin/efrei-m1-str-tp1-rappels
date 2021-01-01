@@ -1,5 +1,7 @@
 # TP 1 - Rappels / compléments - Thread & Synchronisation en langage C
 
+Auteur : Fabien Calcado (tous droits réservés)
+
 ## Exercice 1.1
 
 Ecrivez un programme composé de deux threads (lancés par votre fonction main). Le premier thread devra faire
