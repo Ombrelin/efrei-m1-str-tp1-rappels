@@ -106,10 +106,11 @@ int readBuffer(struct Buffer* buffer) {
 
 void *producer() {
     while (1) {
-        P(&lib);
+
         srand(time(NULL));
         int randomData = rand();
         sleep(3);
+        P(&lib);
         writeBuffer(randomData, &buffer);
         printf("Producer wrote %d in the buffer\n", randomData);
         V(&occ);
@@ -120,9 +121,9 @@ void *consumer() {
     while (1) {
         P(&occ);
         int data = readBuffer(&buffer);
-        sleep(3);
         printf("Consumer read %d from the buffer\n", data);
         V(&lib);
+        sleep(3);
     }
 }
 
@@ -140,7 +141,8 @@ void exo3() {
     pthread_create(&consumer_thread, NULL, consumer, NULL);
     pthread_create(&producer_thread, NULL, producer, NULL);
 
-    while (1) {}
+    pthread_join(consumer_thread,NULL);
+    pthread_join(producer_thread,NULL);
 }
 
 // Exo 4
@@ -160,10 +162,10 @@ struct Buffer ground;
 // Air producer
 void *incomingPlane() {
     while (1) {
-        P(&freeAir);
         srand(time(NULL));
         int randomData = rand();
         sleep(3);
+        P(&freeAir);
         writeBuffer(randomData, &air);
         printf("Plane %d incoming\n", randomData);
         V(&occAir);
@@ -184,10 +186,10 @@ void *landPlane() {
 // Ground producer
 void *releasePlane() {
     while (1) {
-        P(&freeGround);
         srand(time(NULL));
         int randomData = rand();
         sleep(3);
+        P(&freeGround);
         writeBuffer(randomData, &ground);
         printf("Plane %d out of hangar\n", randomData);
         V(&occAir);
@@ -221,7 +223,11 @@ void exo4() {
     pthread_create(&takeOffPLane_thread, NULL, takeOffPLane, NULL);
     pthread_create(&incomingPlane_thread, NULL, incomingPlane, NULL);
     pthread_create(&landPlane_thread, NULL, landPlane, NULL);
-    while(1){}
+
+    pthread_join(releasePlane_thread,NULL);
+    pthread_join(takeOffPLane_thread,NULL);
+    pthread_join(incomingPlane_thread,NULL);
+    pthread_join(incomingPlane_thread,NULL);
 }
 
 int main() {
